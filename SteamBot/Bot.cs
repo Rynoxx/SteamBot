@@ -72,6 +72,7 @@ namespace SteamBot
         // The number, in milliseconds, between polls for the trade.
         int TradePollingInterval;
 
+        public string MyLoginKey = "";
         string sessionId;
         string token;
         bool isprocess;
@@ -323,6 +324,11 @@ namespace SteamBot
             msg.Handle<SteamUser.LoggedOnCallback> (callback =>
             {
                 log.Debug ("Logged On Callback: " + callback.Result);
+                
+                if (callback.Result == EResult.OK)
+                {
+                    MyLoginKey = callback.WebAPIUserNonce;
+                }
 
                 if (callback.Result != EResult.OK)
                 {
@@ -353,7 +359,8 @@ namespace SteamBot
             {
                 while (true)
                 {
-                    bool authd = SteamWeb.Authenticate(callback, SteamClient, out sessionId, out token);
+                    //bool authd = SteamWeb.Authenticate(callback, SteamClient, out sessionId, out token);
+                    bool authd = SteamWeb.Authenticate(callback, SteamClient, out sessionId, out token, MyLoginKey);
                     if (authd)
                     {
                         log.Success ("User Authenticated!");
