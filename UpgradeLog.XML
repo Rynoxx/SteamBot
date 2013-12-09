@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="SteamBot">
+</Property><Property Name="Solution File" Value="C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\SteamBot.sln">
+</Property><Property Name="Date" Value="den 9 december 2013">
+</Property><Property Name="Time" Value="19:11:43">
+</Property></Properties><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBotAPI.csproj" Description="Project file successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\ChatterBotAPI.csproj">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\AssemblyInfo.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\AssemblyInfo.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBotFactory.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\ChatterBotFactory.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBotType.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\ChatterBotType.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBot.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\ChatterBot.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBotSession.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\ChatterBotSession.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\Cleverbot.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\Cleverbot.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBotThought.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\ChatterBotThought.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\Utils.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\Utils.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\Pandorabots.cs" Description="File successfully backed up as C:\Users\Lukas\Documents\GitHub\SteamBot_RYN\_backup\Backup\Pandorabots.cs">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBotAPI.csproj" Description="Project converted successfully">
+</Event><Event ErrorLevel="3" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBotAPI.csproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="ChatterBotAPI" Source="..\SteamBot_backup\Backup\ChatterBotAPI.csproj" Description="Scan complete: Upgrade not required for project files.">
+</Event></UpgradeLog>

@@ -30,9 +30,10 @@ namespace SteamBot
         private const string HelpCmd = "help";
         private const string GoogleCmd = "search";
         private const string LaptopCmd = "laptop";
-        private const bool UseGoogleAPI = true;
+        private const string ToggleGAPICMD = "togglegoogleapi";
         private const int GoogleSearchIntervall = 15;
         private const int MsPerLetter = 40;
+        private bool UseGoogleAPI = true;
         private ChatterBotFactory BotFactory = new ChatterBotFactory();
         private ChatterBot CleverBot;
         private ChatterBotSession CleverBotSession;
@@ -79,6 +80,12 @@ namespace SteamBot
             if (cmd[0].ToLower() == HelpCmd)
             {
                 HelpCommand(cmd, message, type);
+                return;
+            }
+
+            if (cmd[0].ToLower() == ToggleGAPICMD)
+            {
+                ToggleAPICommand(cmd, message, type);
                 return;
             }
 
@@ -216,13 +223,16 @@ namespace SteamBot
 
         #endregion
 
+        #region HelpCmd
         public void HelpCommand(string[] cmd, string message, EChatEntryType type)
         {
             Bot.SteamFriends.SendChatMessage(OtherSID, type, "Hello " + Bot.SteamFriends.GetFriendPersonaName(OtherSID) + ", I'm a bot created by Rynoxx, currently there's 3 main functions I have, googling, calculating math and chatting.");
             Bot.SteamFriends.SendChatMessage(OtherSID, type, "To google something type \"" + GoogleCmd + " [Search Query]\".");
+            Bot.SteamFriends.SendChatMessage(OtherSID, type, "To toggle the use of google api type \"" + ToggleGAPICMD + "\".");
             Bot.SteamFriends.SendChatMessage(OtherSID, type, "To calculate something type \"" + MathCmd + " [Equation]\".");
             Bot.SteamFriends.SendChatMessage(OtherSID, type, "To chat with me, simply type something that doesn't start with " + HelpCmd + ", " + GoogleCmd + ", " + MathCmd + " or any of the hidden commands (which are very few, so don't worry).");
         }
+        #endregion
 
         public string ProperString(string Str)
         {
@@ -230,24 +240,35 @@ namespace SteamBot
         }
 
         #region GoogleCmd
+        public void ToggleAPICommand(string[] cmd, string search, EChatEntryType type)
+        {
+            UseGoogleAPI = !UseGoogleAPI;
+            if (UseGoogleAPI)
+            {
+                Bot.SteamFriends.SendChatMessage(OtherSID, type, "The use of Google search API is now enabled.");
+            }
+            else
+            {
+                Bot.SteamFriends.SendChatMessage(OtherSID, type, "The use of Google search API is now disabled.");
+            }
+        }
+
         public void GoogleCommand(string[] cmd, string search, EChatEntryType type)
         {
             string searchString = "";
 
             foreach (string str in cmd)
             {
-                if (str.ToLower() == GoogleCmd)
-                {
-                    continue;
-                }
-
-                searchString = searchString + str;
+                if (str.ToLower() == GoogleCmd) continue;
+                searchString = searchString + " " + str;
             }
+
+            searchString = searchString.Trim();
 
             if (!UseGoogleAPI)
             {
-                string GoogleSearch = "https://google.com/#q={0}";
-                Bot.SteamFriends.SendChatMessage(OtherSID, type, string.Format(GoogleSearch, searchString));
+                string GoogleSearch = "https://google.com/?q={0}#q={0}";
+                Bot.SteamFriends.SendChatMessage(OtherSID, type, string.Format(GoogleSearch, HttpUtility.UrlEncode(searchString)));
             }
             else
             {
