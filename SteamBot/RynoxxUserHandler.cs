@@ -2,7 +2,7 @@
 using System.Data;
 using SteamKit2;
 using SteamTrade;
-using ChatterBotAPI;
+//using ChatterBotAPI;
 using System.Linq;
 using System.Net;
 using System.Web;
@@ -30,22 +30,23 @@ namespace SteamBot
         private const string HelpCmd = "help";
         private const string GoogleCmd = "search";
         private const string LaptopCmd = "laptop";
+        private const string FibonachiCmd = "fibonachi";
         private const string ToggleGAPICMD = "togglegoogleapi";
         private const int GoogleSearchIntervall = 15;
         private const int MsPerLetter = 40;
         private bool UseGoogleAPI = true;
-        private ChatterBotFactory BotFactory = new ChatterBotFactory();
+        /*private ChatterBotFactory BotFactory = new ChatterBotFactory();
         private ChatterBot CleverBot;
-        private ChatterBotSession CleverBotSession;
+        private ChatterBotSession CleverBotSession;*/
         private Stopwatch LastGoogleSearch = new Stopwatch();
 
         public RynoxxUserHandler(Bot bot, SteamID sid)
             : base(bot, sid)
         {
             Bot.GetInventory();
-            Bot.GetOtherInventory(OtherSID);
-            CleverBot = BotFactory.Create(ChatterBotType.CLEVERBOT);
-            CleverBotSession = CleverBot.CreateSession();
+            //Bot.GetOtherInventory(OtherSID);
+            /*CleverBot = BotFactory.Create(ChatterBotType.CLEVERBOT);
+            CleverBotSession = CleverBot.CreateSession();*/
         }
 
         #region Overrides of AdminUserHandler
@@ -120,7 +121,7 @@ namespace SteamBot
             #endregion
 
             string reply = "";
-            reply = ProperString(CleverBotSession.Think(message));
+			reply = ProperString(message);//CleverBotSession.Think(message));
             Thread.Sleep(reply.Length * MsPerLetter);
             Bot.SteamFriends.SendChatMessage(OtherSID, type, reply);
         }
@@ -134,7 +135,12 @@ namespace SteamBot
         /// </summary>
         public override void OnLoginCompleted()
         {
-        }
+		}
+
+		public override bool OnGroupAdd()
+		{
+			return false;
+		}
 
         /// <summary>
         /// Called when a the user adds the bot as a friend.
@@ -151,6 +157,7 @@ namespace SteamBot
         {
         }
 
+		#region Trades
         /// <summary>
         /// Called whenever a user requests a trade.
         /// </summary>
@@ -219,8 +226,14 @@ namespace SteamBot
                     Log.Warn("Trade might have failed.");
                 }
             }
-        }
+		}
 
+		public override void OnTradeSuccess()
+		{
+			// Trade completed successfully
+			Log.Success("Trade Complete.");
+		}
+		#endregion
         #endregion
 
         #region HelpCmd

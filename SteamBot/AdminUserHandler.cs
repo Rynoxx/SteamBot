@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Forms;
 using SteamKit2;
 using SteamTrade;
 using System.Collections.Generic;
@@ -19,12 +20,7 @@ namespace SteamBot
         private const string AddAllSubCmd = "all";
         private const string HelpCmd = "help";
 
-        public AdminUserHandler(Bot bot, SteamID sid)
-            : base(bot, sid)
-        {
-            Bot.GetInventory();
-            Bot.GetOtherInventory(OtherSID);
-        }
+        public AdminUserHandler(Bot bot, SteamID sid) : base(bot, sid) {}
 
         #region Overrides of UserHandler
 
@@ -33,6 +29,17 @@ namespace SteamBot
         /// </summary>
         public override void OnLoginCompleted()
         {
+        }
+
+        /// <summary>
+        /// Triggered when a clan invites the bot.
+        /// </summary>
+        /// <returns>
+        /// Whether to accept.
+        /// </returns>
+        public override bool OnGroupAdd()
+        {
+            return false;
         }
 
         /// <summary>
@@ -92,7 +99,7 @@ namespace SteamBot
 
         public override void OnTradeInit()
         {
-            Trade.SendMessage("Success. (Type " + HelpCmd + " for commands.)");
+            SendTradeMessage("Success. (Type {0} for commands)", HelpCmd);
         }
 
         public override void OnTradeAddItem(Schema.Item schemaItem, Inventory.Item inventoryItem)
@@ -114,7 +121,7 @@ namespace SteamBot
         {
             if (!IsAdmin)
             {
-                Trade.SendMessage("You are not my master.");
+                SendTradeMessage("You are not my master.");
                 Trade.SetReady(false);
                 return;
             }
@@ -122,19 +129,26 @@ namespace SteamBot
             Trade.SetReady(true);
         }
 
+        public override void OnTradeSuccess()
+        {
+            // Trade completed successfully
+            Log.Success("Trade Complete.");
+        }
+
         public override void OnTradeAccept()
         {
             if (IsAdmin)
             {
-                bool ok = Trade.AcceptTrade();
-
-                if (ok)
+                //Even if it is successful, AcceptTrade can fail on
+                //trades with a lot of items so we use a try-catch
+                try
                 {
-                    Log.Success("Trade was Successful!");
+                    if (Trade.AcceptTrade())
+                        Log.Success("Trade Accepted!");
                 }
-                else
+                catch
                 {
-                    Log.Warn("Trade might have failed.");
+                    Log.Warn("The trade might have failed, but we can't be sure.");
                 }
             }
         }
@@ -152,25 +166,25 @@ namespace SteamBot
             if (message.StartsWith(AddCmd))
             {
                 HandleAddCommand(message);
-                Trade.SendMessage("done adding.");
+                SendTradeMessage("done adding.");
             }
             else if (message.StartsWith(RemoveCmd))
             {
                 HandleRemoveCommand(message);
-                Trade.SendMessage("done removing.");
+                SendTradeMessage("done removing.");
             }
         }
 
         private void PrintHelpMessage()
         {
-            Trade.SendMessage(String.Format("{0} {1} [amount] [series] - adds all crates (optionally by series number, use 0 for amount to add all)", AddCmd, AddCratesSubCmd));
-            Trade.SendMessage(String.Format("{0} {1} [amount] - adds metal", AddCmd, AddMetalSubCmd));
-            Trade.SendMessage(String.Format("{0} {1} [amount] - adds weapons", AddCmd, AddWepsSubCmd));
-            Trade.SendMessage(String.Format("{0} {1} [amount] - adds items", AddCmd, AddAllSubCmd));
-            Trade.SendMessage(String.Format(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafing type.", AddCmd));
-            Trade.SendMessage(String.Format(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd));
+            SendTradeMessage("{0} {1} [amount] [series] - adds all crates (optionally by series number, use 0 for amount to add all)", AddCmd, AddCratesSubCmd);
+            SendTradeMessage("{0} {1} [amount] - adds metal", AddCmd, AddMetalSubCmd);
+            SendTradeMessage("{0} {1} [amount] - adds weapons", AddCmd, AddWepsSubCmd);
+            SendTradeMessage("{0} {1} [amount] - adds items", AddCmd, AddAllSubCmd);
+            SendTradeMessage(@"{0} <craft_material_type> [amount] - adds all or a given amount of items of a given crafting type.", AddCmd);
+            SendTradeMessage(@"{0} <defindex> [amount] - adds all or a given amount of items of a given defindex.", AddCmd);
 
-            Trade.SendMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
+            SendTradeMessage(@"See http://wiki.teamfortress.com/wiki/WebAPI/GetSchema for info about craft_material_type or defindex.");
         }
 
         private void HandleAddCommand(string command)
@@ -278,7 +292,7 @@ namespace SteamBot
             foreach (var schemaItem in l)
             {
                 ushort defindex = schemaItem.Defindex;
-                invItems.AddRange(Bot.MyInventory.GetItemsByDefindex(defindex));
+                invItems.AddRange(Trade.MyInventory.GetItemsByDefindex(defindex));
             }
 
             uint added = 0;
@@ -311,14 +325,14 @@ namespace SteamBot
         {
             if (data.Length < 2)
             {
-                Trade.SendMessage ("No parameter for cmd");
+                SendTradeMessage("No parameter for cmd");
                 subCommand = null;
                 return false;
             }
 
             if (String.IsNullOrEmpty (data [1]))
             {
-                Trade.SendMessage ("No parameter for cmd");
+                SendTradeMessage("No parameter for cmd");
                 subCommand = null;
                 return false;
             }
@@ -334,7 +348,7 @@ namespace SteamBot
 
             if (data.Length > 2)
             {
-                // get the optional ammount parameter
+                // get the optional amount parameter
                 if (!String.IsNullOrEmpty (data [2]))
                 {
                     uint.TryParse (data [2], out amount);

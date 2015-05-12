@@ -12,28 +12,23 @@ namespace SteamTrade.TradeWebAPI
     /// </summary>
     public class TradeSession
     {
-        static string SteamCommunityDomain = "steamcommunity.com";
-        static string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
+        private const string SteamTradeUrl = "http://steamcommunity.com/trade/{0}/";
 
-        string sessionIdEsc;
-        string baseTradeURL;
-        CookieContainer cookies;
+        private string sessionIdEsc;
+        private string baseTradeURL;
 
-        readonly string steamLogin;
-        readonly string sessionId;
-        readonly SteamID OtherSID;
+        private readonly SteamWeb SteamWeb;
+        private readonly SteamID OtherSID;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TradeSession"/> class.
         /// </summary>
-        /// <param name="sessionId">The session id.</param>
-        /// <param name="steamLogin">The current steam login.</param>
         /// <param name="otherSid">The Steam id of the other trading partner.</param>
-        public TradeSession(string sessionId, string steamLogin, SteamID otherSid)
+        /// <param name="steamWeb">The SteamWeb instance for this bot</param>
+        public TradeSession(SteamID otherSid, SteamWeb steamWeb)
         {
-            this.sessionId = sessionId;
-            this.steamLogin = steamLogin;
             OtherSID = otherSid;
+            SteamWeb = steamWeb;
 
             Init();
         }
@@ -80,29 +75,26 @@ namespace SteamTrade.TradeWebAPI
 
 
         /// <summary>
-        /// Gets the foriegn inventory.
+        /// Gets the foreign inventory.
         /// </summary>
         /// <param name="otherId">The other id.</param>
-        /// <param name="contextId">The current trade context id.</param>
         /// <returns>A dynamic JSON object.</returns>
-        /// 
-
-        internal dynamic GetForiegnInventory(SteamID otherId)
+        internal dynamic GetForeignInventory(SteamID otherId)
         {
-            return GetForiegnInventory(otherId, 440, 2);
+            return GetForeignInventory(otherId, 440, 2);
         }
-        internal dynamic GetForiegnInventory(SteamID otherId, int contextId, int appid)
+        internal dynamic GetForeignInventory(SteamID otherId, long contextId, int appid)
         {
             var data = new NameValueCollection();
 
             data.Add("sessionid", sessionIdEsc);
-            data.Add("steamid", "" + otherId);
+            data.Add("steamid", "" + otherId.ConvertToUInt64());
             data.Add("appid", "" + appid);
             data.Add("contextid", "" + contextId);
 
             try
             {
-                string response = Fetch(baseTradeURL + "foreigninventory", "POST", data);
+                string response = Fetch(baseTradeURL + "foreigninventory", "GET", data);
                 return JsonConvert.DeserializeObject(response);
             }
             catch (Exception)
@@ -125,13 +117,7 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch (baseTradeURL + "chat", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -143,7 +129,7 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item doesn't exist in the Bot's inventory,
         /// and returns true if it appears the item was added.
         /// </returns>
-        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,int contextid)
+        internal bool AddItemWebCmd(ulong itemid, int slot,int appid,long contextid)
         {
             var data = new NameValueCollection ();
 
@@ -156,13 +142,7 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch(baseTradeURL + "additem", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -170,7 +150,7 @@ namespace SteamTrade.TradeWebAPI
         /// Returns false if the item isn't in the offered items, or
         /// true if it appears it succeeded.
         /// </summary>
-        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, int contextid)
+        internal bool RemoveItemWebCmd(ulong itemid, int slot, int appid, long contextid)
         {
             var data = new NameValueCollection ();
 
@@ -183,13 +163,7 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch (baseTradeURL + "removeitem", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -205,13 +179,7 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch (baseTradeURL + "toggleready", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -228,13 +196,7 @@ namespace SteamTrade.TradeWebAPI
             string response = Fetch (baseTradeURL + "confirm", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(response);
-
-            if (json == null || json.success != "true")
-            {
-                return false;
-            }
-
-            return true;
+            return IsSuccess(json);
         }
         
         /// <summary>
@@ -249,31 +211,37 @@ namespace SteamTrade.TradeWebAPI
             string result = Fetch (baseTradeURL + "cancel", "POST", data);
 
             dynamic json = JsonConvert.DeserializeObject(result);
+            return IsSuccess(json);
+        }
 
-            if (json == null || json.success != "true")
+        private bool IsSuccess(dynamic json)
+        {
+            if(json == null)
+                return false;
+            try
+            {
+                //Sometimes, the response looks like this:  {"success":false,"results":{"success":11}}
+                //I believe this is Steam's way of asking the trade window (which is actually a webpage) to refresh, following a large successful update
+                return (json.success == "true" || (json.results != null && json.results.success == "11"));
+            }
+            catch(Exception)
             {
                 return false;
             }
-
-            return true;
         }
 
         #endregion Trade Web API command methods
         
         string Fetch (string url, string method, NameValueCollection data = null)
         {
-            return SteamWeb.Fetch (url, method, data, cookies);
+            return SteamWeb.Fetch (url, method, data);
         }
 
         private void Init()
         {
-            sessionIdEsc = Uri.UnescapeDataString(sessionId);
+            sessionIdEsc = Uri.UnescapeDataString(SteamWeb.SessionId);
 
             Version = 1;
-
-            cookies = new CookieContainer();
-            cookies.Add (new Cookie ("sessionid", sessionId, String.Empty, SteamCommunityDomain));
-            cookies.Add (new Cookie ("steamLogin", steamLogin, String.Empty, SteamCommunityDomain));
 
             baseTradeURL = String.Format (SteamTradeUrl, OtherSID.ConvertToUInt64());
         }

@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/r2ml39xoa5svu61y/branch/master?svg=true)](https://ci.appveyor.com/project/Jessecar96/steambot/branch/master)
+
 **SteamBot** is a bot written in C# for the purpose of interacting with Steam Chat and Steam Trade.  As of right now, about 8 contributors have all added to the bot.  The bot is publicly available under the MIT License. Check out [LICENSE] for more details.
 
 There are several things you must do in order to get SteamBot working:
@@ -29,6 +31,7 @@ A list of contributors (add yourself if you want to):
 - [geel9](http://steamcommunity.com/id/geel9)
 - [cwhelchel](http://steamcommunity.com/id/cmw69krinkle)
 - [Lagg](http://lagg.me)
+- [BlueRaja](http://steamcommunity.com/id/BlueRaja/)
 
 ## Wanna Contribute?
 Please read [CONTRIBUTING.md].
