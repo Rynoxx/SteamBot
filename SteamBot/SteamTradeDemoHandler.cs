@@ -7,22 +7,12 @@ namespace SteamBot
     public class SteamTradeDemoHandler : UserHandler
     {
         // NEW ------------------------------------------------------------------
-        private readonly GenericInventory mySteamInventory;
-        private readonly GenericInventory OtherSteamInventory;
-
+        private GenericInventory mySteamInventory = new GenericInventory();
+        private GenericInventory OtherSteamInventory = new GenericInventory();
         private bool tested;
         // ----------------------------------------------------------------------
 
-        public SteamTradeDemoHandler(Bot bot, SteamID sid) : base(bot, sid)
-        {
-            mySteamInventory = new GenericInventory(SteamWeb);
-            OtherSteamInventory = new GenericInventory(SteamWeb);
-        }
-
-        public override bool OnGroupAdd()
-        {
-            return false;
-        }
+        public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
         public override bool OnFriendAdd () 
         {
@@ -41,7 +31,7 @@ namespace SteamBot
         
         public override void OnMessage (string message, EChatEntryType type) 
         {
-            SendChatMessage(Bot.ChatResponse);
+            Bot.SteamFriends.SendChatMessage(OtherSID, type, Bot.ChatResponse);
         }
 
         public override bool OnTradeRequest() 
@@ -51,20 +41,25 @@ namespace SteamBot
         
         public override void OnTradeError (string error) 
         {
-            SendChatMessage("Oh, there was an error: {0}.", error);
-            Bot.Log.Warn (error);
+            Bot.SteamFriends.SendChatMessage (OtherSID, 
+                                              EChatEntryType.ChatMsg,
+                                              "Oh, there was an error: " + error + "."
+                                              );
+            Bot.log.Warn (error);
+
         }
         
         public override void OnTradeTimeout () 
         {
-            SendChatMessage("Sorry, but you were AFK and the trade was canceled.");
-            Bot.Log.Info ("User was kicked because he was AFK.");
+            Bot.SteamFriends.SendChatMessage (OtherSID, EChatEntryType.ChatMsg,
+                                              "Sorry, but you were AFK and the trade was canceled.");
+            Bot.log.Info ("User was kicked because he was AFK.");
         }
         
         public override void OnTradeInit() 
         {
             // NEW -------------------------------------------------------------------------------
-            List<long> contextId = new List<long>();
+            List<int> contextId = new List<int>();
             tested = false;
 
             /*************************************************************************************
@@ -85,37 +80,37 @@ namespace SteamBot
 
             if (!mySteamInventory.isLoaded | !OtherSteamInventory.isLoaded)
             {
-                SendTradeMessage("Couldn't open an inventory, type 'errors' for more info.");
+                Trade.SendMessage("Couldn't open an inventory, type 'errors' for more info.");
             }
 
-            SendTradeMessage("Type 'test' to start.");
+            Trade.SendMessage("Type 'test' to start.");
             // -----------------------------------------------------------------------------------
         }
         
         public override void OnTradeAddItem (Schema.Item schemaItem, Inventory.Item inventoryItem) {
             // USELESS DEBUG MESSAGES -------------------------------------------------------------------------------
-            SendTradeMessage("Object AppID: {0}", inventoryItem.AppId);
-            SendTradeMessage("Object ContextId: {0}", inventoryItem.ContextId);
+            Trade.SendMessage("Object AppID: " + inventoryItem.AppId);
+            Trade.SendMessage("Object ContextId: " + inventoryItem.ContextId);
 
             switch (inventoryItem.AppId)
             {
                 case 440:
-                    SendTradeMessage("TF2 Item Added.");
-                    SendTradeMessage("Name: {0}", schemaItem.Name);
-                    SendTradeMessage("Quality: {0}", inventoryItem.Quality);
-                    SendTradeMessage("Level: {0}", inventoryItem.Level);
-                    SendTradeMessage("Craftable: {0}", (inventoryItem.IsNotCraftable ? "No" : "Yes"));
+                    Trade.SendMessage("TF2 Item Added.");
+                    Trade.SendMessage("Name: " + schemaItem.Name);
+                    Trade.SendMessage("Quality: " + inventoryItem.Quality);
+                    Trade.SendMessage("Level: " + inventoryItem.Level);
+                    Trade.SendMessage("Craftable: " + (inventoryItem.IsNotCraftable?"No":"Yes"));
                     break;
 
                 case 753:
                     GenericInventory.ItemDescription tmpDescription = OtherSteamInventory.getDescription(inventoryItem.Id);
-                    SendTradeMessage("Steam Inventory Item Added.");
-                    SendTradeMessage("Type: {0}", tmpDescription.type);
-                    SendTradeMessage("Marketable: {0}", (tmpDescription.marketable ? "Yes" : "No"));
+                    Trade.SendMessage("Steam Inventory Item Added.");
+                    Trade.SendMessage("Type: " + tmpDescription.type);
+                    Trade.SendMessage("Marketable: " + (tmpDescription.marketable?"Yes":"No"));
                     break;
 
                 default:
-                    SendTradeMessage("Unknown item");
+                    Trade.SendMessage("Unknown item");
                     break;
             }
             // ------------------------------------------------------------------------------------------------------
@@ -129,19 +124,19 @@ namespace SteamBot
                 case "errors":
                     if (OtherSteamInventory.errors.Count > 0)
                     {
-                        SendTradeMessage("User Errors:");
+                        Trade.SendMessage("User Errors:");
                         foreach (string error in OtherSteamInventory.errors)
                         {
-                            SendTradeMessage(" * {0}", error);
+                            Trade.SendMessage(" * " + error);
                         }
                     }
 
                     if (mySteamInventory.errors.Count > 0)
                     {
-                        SendTradeMessage("Bot Errors:");
+                        Trade.SendMessage("Bot Errors:");
                         foreach (string error in mySteamInventory.errors)
                         {
-                            SendTradeMessage(" * {0}", error);
+                            Trade.SendMessage(" * " + error);
                         }
                     }
                 break;
@@ -156,7 +151,7 @@ namespace SteamBot
                     }
                     else
                     {
-                        SendTradeMessage("Items on my bp: {0}", mySteamInventory.items.Count);
+                        Trade.SendMessage("Items on my bp: " + mySteamInventory.items.Count);
                         foreach (GenericInventory.Item item in mySteamInventory.items.Values)
                         {
                             Trade.AddItem(item);
@@ -193,13 +188,7 @@ namespace SteamBot
                 }
             }
         }
-
-        public override void OnTradeSuccess()
-        {
-            // Trade completed successfully
-            Log.Success("Trade Complete.");
-        }
-
+        
         public override void OnTradeAccept() 
         {
             if (Validate() | IsAdmin)
@@ -215,20 +204,22 @@ namespace SteamBot
 
                 Log.Success ("Trade Complete!");
             }
+
+            OnTradeClose ();
         }
 
         public bool Validate ()
         {            
             List<string> errors = new List<string> ();
-            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're an Admin.");
+            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're and Admin.");
 
             // send the errors
             if (errors.Count != 0)
-                SendTradeMessage("There were errors in your trade: ");
+                Trade.SendMessage("There were errors in your trade: ");
 
             foreach (string error in errors)
             {
-                SendTradeMessage(error);
+                Trade.SendMessage(error);
             }
             
             return errors.Count == 0;
