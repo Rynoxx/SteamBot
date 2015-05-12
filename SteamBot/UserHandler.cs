@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading.Tasks;
 using SteamKit2;
 using SteamTrade;
 
@@ -12,11 +13,42 @@ namespace SteamBot
     {
         protected Bot Bot;
         protected SteamID OtherSID;
+        private Task<Inventory> otherInventoryTask;
 
         public UserHandler (Bot bot, SteamID sid)
         {
             Bot = bot;
             OtherSID = sid;
+            GetOtherInventory();
+        }
+
+        /// <summary>
+        /// Gets the other's inventory and stores it in OtherInventory.
+        /// </summary>
+        /// <example> This sample shows how to find items in the other's inventory from a user handler.
+        /// <code>
+        /// GetInventory(); // Not necessary unless you know the user's inventory has changed
+        /// foreach (var item in OtherInventory)
+        /// {
+        ///     if (item.Defindex == 5021)
+        ///     {
+        ///         // Bot has a key in its inventory
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
+        public void GetOtherInventory()
+        {
+            otherInventoryTask = Task.Factory.StartNew(() =>Inventory.FetchInventory(OtherSID, Bot.apiKey));
+        }
+
+        public Inventory OtherInventory
+        {
+            get
+            {
+                otherInventoryTask.Wait();
+                return otherInventoryTask.Result;
+            }
         }
 
         /// <summary>
@@ -51,6 +83,14 @@ namespace SteamBot
         {
             get { return Bot.Admins.Contains (OtherSID); }
         }
+
+        /// <summary>
+        /// Called when the bot is invited to a Steam group
+        /// </summary>
+        /// <returns>
+        /// Whether to accept.
+        /// </returns>
+        public abstract bool OnGroupAdd();
 
         /// <summary>
         /// Called when the user adds the bot as a friend.
@@ -104,12 +144,24 @@ namespace SteamBot
 
         }
 
+        /// <summary>
+        /// Called when user accepts or denies bot's trade request.
+        /// </summary>
+        /// <param name="accepted">True if user accepted bot's request, false if not.</param>
+        /// <param name="response">String response of the callback.</param>
+        public virtual void OnTradeRequestReply(bool accepted, string response)
+        {
+
+        }
+
         #region Trade events
         // see the various events in SteamTrade.Trade for descriptions of these handlers.
 
         public abstract void OnTradeError (string error);
 
         public abstract void OnTradeTimeout ();
+
+        public abstract void OnTradeSuccess ();
 
         public virtual void OnTradeClose ()
         {
@@ -125,9 +177,24 @@ namespace SteamBot
 
         public abstract void OnTradeMessage (string message);
 
+        public void OnTradeReadyHandler(bool ready)
+        {
+            Trade.Poll();
+            OnTradeReady(ready);
+        }
+
         public abstract void OnTradeReady (bool ready);
 
-        public abstract void OnTradeAccept ();
+        public void OnTradeAcceptHandler()
+        {
+            Trade.Poll();
+            if (Trade.OtherIsReady && Trade.MeIsReady)
+            {
+                OnTradeAccept();
+            }
+        }
+
+        public abstract void OnTradeAccept();
 
         #endregion Trade events
     }

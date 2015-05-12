@@ -14,6 +14,11 @@ namespace SteamBot
 
         public SteamTradeDemoHandler (Bot bot, SteamID sid) : base(bot, sid) {}
 
+        public override bool OnGroupAdd()
+        {
+            return false;
+        }
+
         public override bool OnFriendAdd () 
         {
             return true;
@@ -59,7 +64,7 @@ namespace SteamBot
         public override void OnTradeInit() 
         {
             // NEW -------------------------------------------------------------------------------
-            List<int> contextId = new List<int>();
+            List<long> contextId = new List<long>();
             tested = false;
 
             /*************************************************************************************
@@ -188,7 +193,13 @@ namespace SteamBot
                 }
             }
         }
-        
+
+        public override void OnTradeSuccess()
+        {
+            // Trade completed successfully
+            Log.Success("Trade Complete.");
+        }
+
         public override void OnTradeAccept() 
         {
             if (Validate() | IsAdmin)
@@ -204,14 +215,12 @@ namespace SteamBot
 
                 Log.Success ("Trade Complete!");
             }
-
-            OnTradeClose ();
         }
 
         public bool Validate ()
         {            
             List<string> errors = new List<string> ();
-            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're and Admin.");
+            errors.Add("This demo is meant to show you how to handle SteamInventory Items. Trade cannot be completed, unless you're an Admin.");
 
             // send the errors
             if (errors.Count != 0)
